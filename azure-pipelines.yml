@@ -43,11 +43,11 @@ stages:
       artifact: manifests
 
 - stage: 'Deploy'
-  displayName: 'Deploy the container'
+  displayName: 'Deploy the containers'
   dependsOn: Build
   jobs:
-  - job: 'Deploy'
-    displayName: 'Deploy job'
+  - deployment: Deploy
+    displayName: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
     environment: 'Dev'
@@ -59,13 +59,6 @@ stages:
           steps:
           - download: current
             artifact: manifests
-    steps:
-    - task: AzureWebAppContainer@1
-      inputs:
-        appName: $(WebAppName)
-        azureSubscription: 'Resource Manager - Tailspin - Space Game'
-        imageName: $(RegistryName)/$(webRepository):$(build.buildId)
-
     - task: KubernetesManifest@1
       displayName: Create imagePullSecret
       inputs:
@@ -77,7 +70,6 @@ stages:
         azureResourceGroup: 'tailspin-space-game-rg'
         kubernetesCluster: 'tailspinspacegame-27685'
         namespace: 'default'
-
     - task: KubernetesManifest@1
       displayName: Deploy to Kubernetes cluster
       inputs:
@@ -95,3 +87,4 @@ stages:
         containers: |
           $(RegistryName)/$(webRepository):$(tag)
           $(RegistryName)/$(leaderboardRepository):$(tag)
+          
